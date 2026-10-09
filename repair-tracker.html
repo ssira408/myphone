@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบจัดการงานซ่อมโทรศัพท์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#101820;
+    --surface:#182430;
+    --surface-alt:#1f2e3b;
+    --surface-raised:#233648;
+    --text:#e7e9ec;
+    --text-dim:#93a5b3;
+    --accent:#c97b4a;
+    --accent-soft:rgba(201,123,74,0.16);
+    --success:#4f9d6d;
+    --success-soft:rgba(79,157,109,0.16);
+    --warning:#d9a441;
+    --warning-soft:rgba(217,164,65,0.16);
+    --danger:#d9695a;
+    --danger-soft:rgba(217,105,90,0.16);
+    --info:#5b9bd5;
+    --info-soft:rgba(91,155,213,0.16);
+    --border:#2a3a48;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Noto Sans Thai', sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  .app{max-width:1280px;margin:0 auto;padding:24px 20px 60px;}
+
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:18px;border-bottom:1px solid var(--border);}
+  .title-block h1{font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:0.2px;}
+  .title-block p{margin:0;color:var(--text-dim);font-size:13.5px;}
+  .header-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn{font-family:inherit;border:none;border-radius:8px;padding:10px 18px;font-size:14.5px;font-weight:600;cursor:pointer;transition:transform .12s ease, filter .12s ease;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+  .btn:active{transform:scale(0.97);}
+  .btn-accent{background:var(--accent);color:#1a1008;}
+  .btn-accent:hover{filter:brightness(1.08);}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+  .btn-ghost:hover{border-color:var(--accent);}
+  .btn-info{background:var(--info-soft);color:var(--info);border:1px solid var(--info);}
+  .btn-success{background:var(--success-soft);color:var(--success);border:1px solid var(--success);}
+  .btn-sm{padding:6px 10px;font-size:12.5px;border-radius:6px;}
+
+  .tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;}
+  .tab{padding:8px 16px;border-radius:8px;font-size:13.5px;font-weight:600;color:var(--text-dim);cursor:pointer;border:1px solid transparent;}
+  .tab.active{background:var(--surface-alt);color:var(--text);border-color:var(--border);}
+
+  .search-row{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+  .search-row input{flex:1;min-width:220px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:8px;font-family:inherit;font-size:14px;}
+  .search-row input::placeholder{color:var(--text-dim);}
+
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+  @media (max-width:900px){.board{grid-template-columns:1fr 1fr;}}
+  @media (max-width:560px){.board{grid-template-columns:1fr;}}
+  .col{background:var(--surface);border-radius:12px;padding:14px;min-height:120px;border:1px solid var(--border);}
+  .col-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+  .col-head h2{font-size:14px;margin:0;font-weight:600;}
+  .col-count{background:var(--surface-raised);color:var(--text-dim);font-size:12px;padding:2px 9px;border-radius:99px;font-weight:600;}
+  .empty-hint{color:var(--text-dim);font-size:12.5px;padding:10px 2px;line-height:1.6;}
+
+  .card{background:var(--surface-alt);border-radius:10px;padding:12px 12px 10px;margin-bottom:10px;border:1px solid transparent;}
+  .card:hover{border-color:var(--accent);}
+  .card-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;}
+  .card-device{font-weight:600;font-size:14px;}
+  .card-customer{color:var(--text-dim);font-size:12.5px;margin-top:2px;}
+  .badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap;}
+  .badge-light{background:var(--success-soft);color:var(--success);}
+  .badge-medium{background:var(--warning-soft);color:var(--warning);}
+  .badge-severe{background:var(--danger-soft);color:var(--danger);}
+
+  .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px;}
+  .tag{font-size:11px;background:var(--surface-raised);color:var(--text-dim);padding:3px 8px;border-radius:6px;}
+  .card-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+
+  .overlay{position:fixed;inset:0;background:rgba(6,10,14,0.6);display:none;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto;z-index:50;}
+  .overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:560px;padding:22px 22px 24px;}
+  .modal h2{margin:0 0 4px;font-size:18px;}
+  .modal .sub{color:var(--text-dim);font-size:13px;margin:0 0 18px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text-dim);}
+  .field input, .field textarea, .field select{width:100%;background:var(--surface-alt);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-family:inherit;font-size:14px;}
+  .field textarea{resize:vertical;min-height:60px;}
+  .field select{appearance:auto;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  .hidden{display:none !important;}
+
+  .chip-grid{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{border:1px solid var(--border);background:var(--surface-alt);color:var(--text-dim);padding:7px 13px;border-radius:99px;font-size:13px;cursor:pointer;user-select:none;}
+  .chip.selected{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600;}
+
+  .severity-row{display:flex;gap:8px;}
+  .sev-opt{flex:1;text-align:center;padding:9px 6px;border-radius:8px;border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;color:var(--text-dim);}
+  .sev-opt.sel-light.on{border-color:var(--success);background:var(--success-soft);color:var(--success);}
+  .sev-opt.sel-medium.on{border-color:var(--warning);background:var(--warning-soft);color:var(--warning);}
+  .sev-opt.sel-severe.on{border-color:var(--danger);background:var(--danger-soft);color:var(--danger);}
+
+  .center-banner{display:none;background:var(--danger-soft);border:1px solid var(--danger);color:var(--danger);border-radius:8px;padding:10px 12px;font-size:13px;margin-top:6px;line-height:1.5;}
+  .center-banner.show{display:block;}
+
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;border-top:1px solid var(--border);padding-top:16px;}
+  .loading-text{color:var(--text-dim);font-size:13px;text-align:center;padding:40px 0;}
+
+  .confirm-modal{max-width:420px;}
+  .confirm-message{white-space:pre-line;font-size:14px;line-height:1.7;color:var(--text);margin:0;}
+
+  /* Parts picker inside "close job" modal */
+  .parts-picker{border:1px solid var(--border);border-radius:10px;max-height:260px;overflow-y:auto;}
+  .part-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);}
+  .part-row:last-child{border-bottom:none;}
+  .part-row .p-name{font-size:13.5px;font-weight:600;}
+  .part-row .p-meta{font-size:11.5px;color:var(--text-dim);margin-top:2px;}
+  .qty-stepper{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .qty-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--surface-raised);color:var(--text);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .qty-btn:disabled{opacity:0.35;cursor:not-allowed;}
+  .qty-value{min-width:20px;text-align:center;font-weight:700;font-size:13.5px;}
+  .parts-total{margin-top:10px;text-align:right;font-size:13.5px;font-weight:700;color:var(--accent);}
+
+  /* Stats + tables reused across finance/stock */
+  .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+  @media (max-width:700px){.stats-grid{grid-template-columns:1fr;}}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;}
+  .stat-card .label{color:var(--text-dim);font-size:12.5px;margin-bottom:6px;}
+  .stat-card .value{font-size:22px;font-weight:700;}
+  .stat-card.profit .value{color:var(--success);}
+
+  table.data-table{width:100%;border-collapse:collapse;background:var(--surface);border-radius:12px;overflow:hidden;border:1px solid var(--border);}
+  table.data-table th, table.data-table td{padding:10px 12px;text-align:left;font-size:13px;border-bottom:1px solid var(--border);}
+  table.data-table th{color:var(--text-dim);font-weight:600;background:var(--surface-alt);}
+  table.data-table td.num{text-align:right;font-variant-numeric:tabular-nums;}
+  table.data-table tr:last-child td{border-bottom:none;}
+  .profit-cell{color:var(--success);font-weight:700;}
+  .section-title{font-size:15px;font-weight:700;margin:26px 0 12px;}
+  .section-title:first-child{margin-top:0;}
+  .table-wrap{overflow-x:auto;}
+  .move-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;}
+  .move-in{background:var(--success-soft);color:var(--success);}
+  .move-out{background:var(--danger-soft);color:var(--danger);}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="title-block">
+      <h1>ระบบจัดการงานซ่อมโทรศัพท์</h1>
+      <p>บันทึกเครื่องที่ลูกค้านำมาซ่อม ระบุอาการ จัดสต๊อกอะไหล่ และสรุปรายรับเมื่อลูกค้ามารับเครื่อง</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-accent" id="btnNew">+ รับเครื่องใหม่</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" id="tabBoard">บอร์ดงานซ่อม</div>
+    <div class="tab" id="tabStock">สต๊อกอะไหล่</div>
+    <div class="tab" id="tabFinance">ฝ่ายการเงิน</div>
+  </div>
+
+  <div id="viewBoard">
+    <div class="search-row">
+      <input type="text" id="searchInput" placeholder="ค้นหาชื่อลูกค้า, เบอร์โทร, ยี่ห้อ หรือรุ่น...">
+    </div>
+    <div id="boardWrap"><div class="loading-text">กำลังโหลดรายการซ่อม...</div></div>
+  </div>
+
+  <div id="viewStock" class="hidden">
+    <div class="header-actions" style="margin-bottom:18px;">
+      <button class="btn btn-accent" id="btnAddPart">+ เพิ่มอะไหล่ใหม่</button>
+      <button class="btn btn-ghost" id="btnStockIn">+ รับอะไหล่เข้าสต๊อก</button>
+      <button class="btn btn-ghost" id="btnSeedParts">+ เพิ่มข้อมูลตัวอย่าง (10 รายการ)</button>
+    </div>
+    <div id="stockWrap"><div class="loading-text">กำลังโหลดสต๊อกอะไหล่...</div></div>
+  </div>
+
+  <div id="viewFinance" class="hidden">
+    <div id="financeWrap"><div class="loading-text">กำลังโหลดข้อมูลการเงิน...</div></div>
+  </div>
+</div>
+
+<!-- New / Edit ticket modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">รับเครื่องใหม่</h2>
+    <p class="sub">กรอกข้อมูลเครื่องและอาการเสียที่ลูกค้าแจ้ง</p>
+
+    <div class="two-col">
+      <div class="field">
+        <label>ชื่อลูกค้า</label>
+        <input type="text" id="fCustomer" placeholder="เช่น คุณสมชาย">
+      </div>
+      <div class="field">
+        <label>เบอร์ติดต่อ</label>
+        <input type="text" id="fPhone" placeholder="08x-xxx-xxxx">
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="field">
+        <label>ยี่ห้อโทรศัพท์</label>
+        <select id="fBrandSelect"></select>
+        <input type="text" id="fBrandCustom" class="hidden" placeholder="ระบุยี่ห้อ" style="margin-top:8px;">
+      </div>
+      <div class="field">
+        <label>รุ่น</label>
+        <select id="fModelSelect"></select>
+        <input type="text" id="fModelCustom" class="hidden" placeholder="ระบุรุ่น" style="margin-top:8px;">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>อาการเสีย (เลือกได้หลายข้อ)</label>
+      <div class="chip-grid" id="symptomGrid"></div>
+    </div>
+
+    <div class="field">
+      <label>อาการอื่น ๆ (ถ้ามี)</label>
+      <input type="text" id="fCustomSymptom" placeholder="ระบุอาการเพิ่มเติม">
+    </div>
+
+    <div class="field">
+      <label>ระดับความรุนแรง</label>
+      <div class="severity-row" id="severityRow">
+        <div class="sev-opt sel-light" data-val="light">เล็กน้อย</div>
+        <div class="sev-opt sel-medium" data-val="medium">ปานกลาง</div>
+        <div class="sev-opt sel-severe" data-val="severe">รุนแรง</div>
+      </div>
+      <div class="center-banner" id="centerBanner">อาการนี้ซับซ้อน แนะนำให้ส่งซ่อมที่ศูนย์แทนการซ่อมหน้าร้าน</div>
+    </div>
+
+    <div class="field">
+      <label>หมายเหตุเพิ่มเติม</label>
+      <textarea id="fNotes" placeholder="รายละเอียดอื่น ๆ ที่พนักงานควรทราบ"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btnCancel">ยกเลิก</button>
+      <button class="btn btn-accent" id="btnSave">บันทึกรายการ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Done / billing modal -->
+<div class="overlay" id="doneOverlay">
+  <div class="modal">
+    <h2>ปิดงานซ่อม</h2>
+    <p class="sub">กรอกยอดเรียกเก็บ และเลือกอะไหล่ที่ใช้จากสต๊อก ระบบจะตัดสต๊อกและคิดต้นทุนให้อัตโนมัติ</p>
+    <div class="field">
+      <label>ราคาที่เรียกเก็บจากลูกค้า (บาท, รวม VAT)</label>
+      <input type="number" id="dPrice" min="0" placeholder="เช่น 1200">
+    </div>
+    <div class="field">
+      <label>อะไหล่ที่ใช้ซ่อม</label>
+      <div class="parts-picker" id="donePartsList"></div>
+      <div class="parts-total" id="donePartsTotal">รวมต้นทุนอะไหล่: ฿0.00</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btnDoneCancel">ยกเลิก</button>
+      <button class="btn btn-accent" id="btnDoneConfirm">ยืนยันปิดงาน</button>
+    </div>
+  </div>
+</div>
+
+<!-- Generic confirm / alert modal -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal confirm-modal">
+    <h2 id="confirmTitle">ยืนยันการทำรายการ</h2>
+    <p class="confirm-message" id="confirmMessage"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btnConfirmCancel">ยกเลิก</button>
+      <button class="btn btn-accent" id="btnConfirmOk">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add / edit part modal -->
+<div class="overlay" id="partOverlay">
+  <div class="modal">
+    <h2 id="partModalTitle">เพิ่มอะไหล่ใหม่</h2>
+    <p class="sub">ตั้งชื่ออะไหล่ ต้นทุน และราคาขายของร้าน เพื่อให้เลือกใช้ตอนปิดงานซ่อมได้โดยไม่ต้องพิมพ์</p>
+    <div class="field">
+      <label>ชื่ออะไหล่</label>
+      <input type="text" id="pName" placeholder="เช่น จอ iPhone 13, แบตเตอรี่ Samsung A54">
+    </div>
+    <div class="three-col">
+      <div class="field">
+        <label>ต้นทุน/ชิ้น (บาท)</label>
+        <input type="number" id="pCost" min="0" placeholder="0">
+      </div>
+      <div class="field">
+        <label>ราคาขาย/ชิ้น (บาท)</label>
+        <input type="number" id="pSale" min="0" placeholder="0">
+      </div>
+      <div class="field" id="pQtyField">
+        <label>จำนวนคงเหลือเริ่มต้น</label>
+        <input type="number" id="pQty" min="0" placeholder="0">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btnPartCancel">ยกเลิก</button>
+      <button class="btn btn-accent" id="btnPartSave">บันทึกอะไหล่</button>
+    </div>
+  </div>
+</div>
+
+<!-- Stock-in modal -->
+<div class="overlay" id="stockInOverlay">
+  <div class="modal">
+    <h2>รับอะไหล่เข้าสต๊อก</h2>
+    <p class="sub">บันทึกจำนวนอะไหล่ที่รับเข้าร้าน เพื่ออัปเดตยอดคงเหลือ</p>
+    <div class="field">
+      <label>อะไหล่</label>
+      <select id="siPartSelect"></select>
+    </div>
+    <div class="two-col">
+      <div class="field">
+        <label>จำนวนที่รับเข้า</label>
+        <input type="number" id="siQty" min="1" placeholder="เช่น 10">
+      </div>
+      <div class="field">
+        <label>หมายเหตุ (ถ้ามี)</label>
+        <input type="text" id="siNote" placeholder="เช่น ซื้อจากร้าน ABC">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btnStockInCancel">ยกเลิก</button>
+      <button class="btn btn-accent" id="btnStockInSave">บันทึกรับเข้า</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* เมื่อเปิดไฟล์นี้นอก Claude (เช่น ดาวน์โหลดไปเปิดในเบราว์เซอร์เอง) จะไม่มี window.storage
+   จึงใช้ localStorage ของเบราว์เซอร์แทน เพื่อให้ข้อมูลยังบันทึกได้ */
+if (!window.storage) {
+  window.storage = {
+    async set(key, value){ localStorage.setItem("repairshop:" + key, value); return { key, value }; },
+    async get(key){
+      const v = localStorage.getItem("repairshop:" + key);
+      if (v === null) throw new Error("Key not found: " + key);
+      return { key, value: v };
+    },
+    async delete(key){ localStorage.removeItem("repairshop:" + key); return { key, deleted: true }; },
+    async list(prefix){
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("repairshop:" + (prefix || ""))) keys.push(k.slice("repairshop:".length));
+      }
+      return { keys };
+    },
+  };
+}
+
+const SYMPTOMS = [
+  { key:"screen", label:"จอแตก/จอเสีย", sev:"medium" },
+  { key:"battery", label:"แบตเตอรี่เสื่อม", sev:"medium" },
+  { key:"battery_swell", label:"แบตเตอรี่บวม", sev:"severe" },
+  { key:"charge", label:"ชาร์จไม่เข้า", sev:"medium" },
+  { key:"nopower", label:"เปิดไม่ติด", sev:"severe" },
+  { key:"water", label:"น้ำเข้าเครื่อง", sev:"severe" },
+  { key:"speaker", label:"ไม่มีเสียง/ลำโพงเสีย", sev:"light" },
+  { key:"camera", label:"กล้องเสีย", sev:"light" },
+  { key:"button", label:"ปุ่มกดไม่ทำงาน", sev:"light" },
+  { key:"board", label:"เมนบอร์ด/ไอซีเสีย", sev:"severe" },
+  { key:"software", label:"ซอฟต์แวร์ค้าง/รีสตาร์ทเอง", sev:"light" },
+  { key:"signal", label:"สัญญาณ/เสาอากาศมีปัญหา", sev:"medium" },
+];
+
+const OTHER_KEY = "__other__";
+
+const BRAND_MODELS = {
+  "Apple (iPhone)": ["iPhone 16 Pro Max","iPhone 16 Pro","iPhone 16","iPhone 15 Pro Max","iPhone 15 Pro","iPhone 15","iPhone 14 Pro Max","iPhone 14","iPhone 13 Pro Max","iPhone 13","iPhone 12","iPhone 11","iPhone XR","iPhone SE"],
+  "Samsung": ["Galaxy S24 Ultra","Galaxy S24","Galaxy S23 Ultra","Galaxy S23","Galaxy Z Flip 5","Galaxy Z Fold 5","Galaxy A55","Galaxy A54","Galaxy A34","Galaxy A24","Galaxy A14","Galaxy A05","Galaxy Note 20"],
+  "Oppo": ["Reno 12","Reno 11","A79","A78","A58","A18","A17","Find X7","Find X6"],
+  "Vivo": ["V30","V29","Y100","Y36","Y17s","X100"],
+  "Xiaomi": ["Redmi Note 13 Pro","Redmi Note 13","Redmi Note 12","Redmi 13C","Redmi 12","Poco X6","Poco M6","Mi 11"],
+  "Realme": ["12 Pro","11 Pro","C67","C55","C51","GT Neo"],
+  "Huawei": ["Nova 12","Nova 11","P60","Mate 60"],
+  "OnePlus": ["12","11","Nord CE 4","Nord 3"],
+  "Google (Pixel)": ["Pixel 9 Pro","Pixel 9","Pixel 8","Pixel 7a","Pixel 7"],
+  "ASUS (ROG Phone / Zenfone)": ["ROG Phone 8","ROG Phone 7","Zenfone 10"],
+  "Infinix": ["Note 40","Note 30","Hot 40","Smart 8"],
+  "Tecno": ["Camon 30","Camon 20","Spark 20","Pova 6"],
+  "Nothing": ["Phone (2a)","Phone (2)","Phone (1)"],
+  "Honor": ["Magic 6","90","X9b"],
+  "Nokia": ["G42","C32","105 (ปุ่มกด)"],
+  "Sony (Xperia)": ["Xperia 1 V","Xperia 10 V"],
+};
+
+const STATUS_COLUMNS = [
+  { key:"pending",     label:"รอซ่อม" },
+  { key:"repairing",   label:"กำลังซ่อม" },
+  { key:"sent_center", label:"ส่งศูนย์" },
+  { key:"done",        label:"เสร็จแล้ว" },
+];
+
+const SEV_LABEL = { light:"เล็กน้อย", medium:"ปานกลาง", severe:"รุนแรง" };
+const VAT_RATE = 0.07;
+
+/* ---------- Storage helpers with retry (the backend occasionally returns a transient
+   "Internal server error" — retry a couple of times with a short backoff before giving up) ---------- */
+function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+async function storageSet(key, value, attempts){
+  attempts = attempts || 3;
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await window.storage.set(key, value);
+    } catch (e) {
+      lastErr = e;
+      console.error(`storage.set failed (attempt ${i+1}/${attempts}) for ${key}`, e);
+      if (i < attempts - 1) await wait(400 * (i + 1));
+    }
+  }
+  throw lastErr;
+}
+
+async function storageGet(key, attempts){
+  attempts = attempts || 3;
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await window.storage.get(key);
+    } catch (e) {
+      lastErr = e;
+      if (i < attempts - 1) await wait(300 * (i + 1));
+    }
+  }
+  throw lastErr;
+}
+
+async function storageDelete(key, attempts){
+  attempts = attempts || 3;
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await window.storage.delete(key);
+    } catch (e) {
+      lastErr = e;
+      if (i < attempts - 1) await wait(300 * (i + 1));
+    }
+  }
+  throw lastErr;
+}
+
+async function storageList(prefix, attempts){
+  attempts = attempts || 3;
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await window.storage.list(prefix);
+    } catch (e) {
+      lastErr = e;
+      if (i < attempts - 1) await wait(300 * (i + 1));
+    }
+  }
+  throw lastErr;
+}
+
+let tickets = [];
+let financeRecords = [];
+let parts = [];
+let stockMoves = [];
+let selectedSymptoms = new Set();
+let currentSeverity = "light";
+let editingId = null;
+let searchTerm = "";
+let pendingDoneTicketId = null;
+let donePartsSelection = {};
+let editingPartId = null;
+
+const boardWrap = document.getElementById("boardWrap");
+const overlay = document.getElementById("overlay");
+const doneOverlay = document.getElementById("doneOverlay");
+const confirmOverlay = document.getElementById("confirmOverlay");
+const partOverlay = document.getElementById("partOverlay");
+const stockInOverlay = document.getElementById("stockInOverlay");
+
+/* ---------- Tabs ---------- */
+document.getElementById("tabBoard").addEventListener("click", () => switchTab("board"));
+document.getElementById("tabStock").addEventListener("click", () => switchTab("stock"));
+document.getElementById("tabFinance").addEventListener("click", () => switchTab("finance"));
+function switchTab(tab){
+  document.getElementById("tabBoard").classList.toggle("active", tab === "board");
+  document.getElementById("tabStock").classList.toggle("active", tab === "stock");
+  document.getElementById("tabFinance").classList.toggle("active", tab === "finance");
+  document.getElementById("viewBoard").classList.toggle("hidden", tab !== "board");
+  document.getElementById("viewStock").classList.toggle("hidden", tab !== "stock");
+  document.getElementById("viewFinance").classList.toggle("hidden", tab !== "finance");
+  if (tab === "stock") renderStock();
+  if (tab === "finance") renderFinance();
+}
+
+/* ---------- Custom confirm / alert (browser confirm/alert are blocked inside the sandbox) ---------- */
+function showConfirm(message, title){
+  return new Promise((resolve) => {
+    document.getElementById("confirmTitle").textContent = title || "ยืนยันการทำรายการ";
+    document.getElementById("confirmMessage").textContent = message;
+    const okBtn = document.getElementById("btnConfirmOk");
+    const cancelBtn = document.getElementById("btnConfirmCancel");
+    confirmOverlay.classList.add("open");
+    function cleanup(result){
+      confirmOverlay.classList.remove("open");
+      okBtn.removeEventListener("click", onOk);
+      cancelBtn.removeEventListener("click", onCancel);
+      confirmOverlay.removeEventListener("click", onOverlay);
+      resolve(result);
+    }
+    function onOk(){ cleanup(true); }
+    function onCancel(){ cleanup(false); }
+    function onOverlay(e){ if (e.target === confirmOverlay) cleanup(false); }
+    okBtn.addEventListener("click", onOk);
+    cancelBtn.addEventListener("click", onCancel);
+    confirmOverlay.addEventListener("click", onOverlay);
+  });
+}
+function showAlert(message, title){
+  return new Promise((resolve) => {
+    document.getElementById("confirmTitle").textContent = title || "แจ้งเตือน";
+    document.getElementById("confirmMessage").textContent = message;
+    const okBtn = document.getElementById("btnConfirmOk");
+    const cancelBtn = document.getElementById("btnConfirmCancel");
+    cancelBtn.classList.add("hidden");
+    confirmOverlay.classList.add("open");
+    function cleanup(){
+      confirmOverlay.classList.remove("open");
+      cancelBtn.classList.remove("hidden");
+      okBtn.removeEventListener("click", onOk);
+      confirmOverlay.removeEventListener("click", onOverlay);
+      resolve(true);
+    }
+    function onOk(){ cleanup(); }
+    function onOverlay(e){ if (e.target === confirmOverlay) cleanup(); }
+    okBtn.addEventListener("click", onOk);
+    confirmOverlay.addEventListener("click", onOverlay);
+  });
+}
+
+const symptomGrid = document.getElementById("symptomGrid");
+const severityRow = document.getElementById("severityRow");
+const centerBanner = document.getElementById("centerBanner");
+const fBrandSelect = document.getElementById("fBrandSelect");
+const fBrandCustom = document.getElementById("fBrandCustom");
+const fModelSelect = document.getElementById("fModelSelect");
+const fModelCustom = document.getElementById("fModelCustom");
+
+/* ---------- Brand / Model selects ---------- */
+function buildBrandSelect(){
+  fBrandSelect.innerHTML = "";
+  Object.keys(BRAND_MODELS).forEach(brand => {
+    const opt = document.createElement("option");
+    opt.value = brand; opt.textContent = brand;
+    fBrandSelect.appendChild(opt);
+  });
+  const otherOpt = document.createElement("option");
+  otherOpt.value = OTHER_KEY; otherOpt.textContent = "อื่นๆ (ระบุยี่ห้อเอง)";
+  fBrandSelect.appendChild(otherOpt);
+}
+buildBrandSelect();
+
+function buildModelSelect(brand){
+  fModelSelect.innerHTML = "";
+  const models = BRAND_MODELS[brand] || [];
+  models.forEach(m => {
+    const opt = document.createElement("option");
+    opt.value = m; opt.textContent = m;
+    fModelSelect.appendChild(opt);
+  });
+  const otherOpt = document.createElement("option");
+  otherOpt.value = OTHER_KEY; otherOpt.textContent = "อื่นๆ (ระบุรุ่นเอง)";
+  fModelSelect.appendChild(otherOpt);
+}
+
+fBrandSelect.addEventListener("change", () => {
+  const val = fBrandSelect.value;
+  fBrandCustom.classList.toggle("hidden", val !== OTHER_KEY);
+  if (val === OTHER_KEY) {
+    fModelSelect.innerHTML = "";
+    const opt = document.createElement("option");
+    opt.value = OTHER_KEY; opt.textContent = "อื่นๆ (ระบุรุ่นเอง)";
+    fModelSelect.appendChild(opt);
+    fModelCustom.classList.remove("hidden");
+  } else {
+    buildModelSelect(val);
+    fModelCustom.classList.add("hidden");
+  }
+});
+fModelSelect.addEventListener("change", () => {
+  fModelCustom.classList.toggle("hidden", fModelSelect.value !== OTHER_KEY);
+});
+
+/* ---------- Symptom chips ---------- */
+function buildSymptomChips(){
+  symptomGrid.innerHTML = "";
+  SYMPTOMS.forEach(s => {
+    const chip = document.createElement("div");
+    chip.className = "chip";
+    chip.textContent = s.label;
+    chip.dataset.key = s.key;
+    chip.addEventListener("click", () => {
+      if (selectedSymptoms.has(s.key)) selectedSymptoms.delete(s.key);
+      else selectedSymptoms.add(s.key);
+      chip.classList.toggle("selected");
+      autoSuggestSeverity();
+    });
+    symptomGrid.appendChild(chip);
+  });
+}
+buildSymptomChips();
+
+function autoSuggestSeverity(){
+  let worst = "light";
+  const order = { light:0, medium:1, severe:2 };
+  selectedSymptoms.forEach(key => {
+    const s = SYMPTOMS.find(x => x.key === key);
+    if (s && order[s.sev] > order[worst]) worst = s.sev;
+  });
+  setSeverity(worst);
+}
+
+function setSeverity(val){
+  currentSeverity = val;
+  document.querySelectorAll(".sev-opt").forEach(el => el.classList.toggle("on", el.dataset.val === val));
+  centerBanner.classList.toggle("show", val === "severe");
+}
+severityRow.querySelectorAll(".sev-opt").forEach(el => el.addEventListener("click", () => setSeverity(el.dataset.val)));
+
+/* ---------- New / Edit ticket modal ---------- */
+function resetForm(){
+  editingId = null;
+  selectedSymptoms = new Set();
+  currentSeverity = "light";
+  document.getElementById("fCustomer").value = "";
+  document.getElementById("fPhone").value = "";
+  buildBrandSelect();
+  fBrandSelect.value = Object.keys(BRAND_MODELS)[0];
+  buildModelSelect(fBrandSelect.value);
+  fBrandCustom.value = ""; fBrandCustom.classList.add("hidden");
+  fModelCustom.value = ""; fModelCustom.classList.add("hidden");
+  document.getElementById("fCustomSymptom").value = "";
+  document.getElementById("fNotes").value = "";
+  document.querySelectorAll(".chip").forEach(c => c.classList.remove("selected"));
+  setSeverity("light");
+  document.getElementById("modalTitle").textContent = "รับเครื่องใหม่";
+}
+
+function openModalForNew(){
+  resetForm();
+  overlay.classList.add("open");
+}
+
+function openModalForEdit(ticket){
+  editingId = ticket.id;
+  document.getElementById("fCustomer").value = ticket.customerName || "";
+  document.getElementById("fPhone").value = ticket.phoneNumber || "";
+
+  buildBrandSelect();
+  if (BRAND_MODELS[ticket.brand]) {
+    fBrandSelect.value = ticket.brand;
+    buildModelSelect(ticket.brand);
+    fBrandCustom.value = ""; fBrandCustom.classList.add("hidden");
+    if (BRAND_MODELS[ticket.brand].includes(ticket.model)) {
+      fModelSelect.value = ticket.model;
+      fModelCustom.value = ""; fModelCustom.classList.add("hidden");
+    } else {
+      fModelSelect.value = OTHER_KEY;
+      fModelCustom.value = ticket.model || ""; fModelCustom.classList.remove("hidden");
+    }
+  } else {
+    fBrandSelect.value = OTHER_KEY;
+    fBrandCustom.value = ticket.brand || ""; fBrandCustom.classList.remove("hidden");
+    fModelSelect.innerHTML = "";
+    const opt = document.createElement("option");
+    opt.value = OTHER_KEY; opt.textContent = "อื่นๆ (ระบุรุ่นเอง)";
+    fModelSelect.appendChild(opt);
+    fModelCustom.value = ticket.model || ""; fModelCustom.classList.remove("hidden");
+  }
+
+  document.getElementById("fCustomSymptom").value = ticket.customSymptom || "";
+  document.getElementById("fNotes").value = ticket.notes || "";
+  selectedSymptoms = new Set(ticket.symptoms || []);
+  document.querySelectorAll(".chip").forEach(c => c.classList.toggle("selected", selectedSymptoms.has(c.dataset.key)));
+  setSeverity(ticket.severity || "light");
+  document.getElementById("modalTitle").textContent = "แก้ไขรายการซ่อม";
+  overlay.classList.add("open");
+}
+
+document.getElementById("btnNew").addEventListener("click", openModalForNew);
+document.getElementById("btnCancel").addEventListener("click", () => overlay.classList.remove("open"));
+overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.classList.remove("open"); });
+
+document.getElementById("btnSave").addEventListener("click", async () => {
+  const customerName = document.getElementById("fCustomer").value.trim();
+  const brand = fBrandSelect.value === OTHER_KEY ? fBrandCustom.value.trim() : fBrandSelect.value;
+  const model = fModelSelect.value === OTHER_KEY ? fModelCustom.value.trim() : fModelSelect.value;
+  if (!customerName || !brand) {
+    await showAlert("กรุณากรอกชื่อลูกค้าและยี่ห้อโทรศัพท์อย่างน้อย");
+    return;
+  }
+  const prev = editingId ? tickets.find(t => t.id === editingId) : null;
+  const ticket = {
+    id: editingId || ("t" + Date.now()),
+    customerName,
+    phoneNumber: document.getElementById("fPhone").value.trim(),
+    brand,
+    model,
+    symptoms: Array.from(selectedSymptoms),
+    customSymptom: document.getElementById("fCustomSymptom").value.trim(),
+    severity: currentSeverity,
+    notes: document.getElementById("fNotes").value.trim(),
+    status: prev ? prev.status : "pending",
+    repairPrice: prev ? prev.repairPrice : undefined,
+    partsCost: prev ? prev.partsCost : undefined,
+    usedParts: prev ? prev.usedParts : undefined,
+    createdAt: prev ? prev.createdAt : Date.now(),
+  };
+  await saveTicket(ticket);
+  overlay.classList.remove("open");
+  render();
+});
+
+async function saveTicket(ticket){
+  try {
+    await storageSet("ticket:" + ticket.id, JSON.stringify(ticket));
+    const idx = tickets.findIndex(t => t.id === ticket.id);
+    if (idx >= 0) tickets[idx] = ticket; else tickets.push(ticket);
+  } catch (err) {
+    console.error("บันทึกไม่สำเร็จ", err);
+    await showAlert("บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่");
+  }
+}
+
+async function deleteTicket(id){
+  const t = tickets.find(x => x.id === id);
+  if (!t) return;
+  const ok = await showConfirm(
+    `ลูกค้า: ${t.customerName}\nเครื่อง: ${t.brand} ${t.model || ""}\n\nการลบนี้ไม่สามารถกู้คืนได้ ใช้ในกรณีบันทึกผิดเท่านั้น`,
+    "ยืนยันลบรายการนี้หรือไม่?"
+  );
+  if (!ok) return;
+  try {
+    await storageDelete("ticket:" + id);
+    tickets = tickets.filter(t => t.id !== id);
+    render();
+  } catch (err) {
+    console.error("ลบไม่สำเร็จ", err);
+    await showAlert("ลบไม่สำเร็จ กรุณาลองใหม่");
+  }
+}
+
+/* ---------- Parts picker inside the "close job" modal ---------- */
+function buildDonePartsList(prefillUsedParts){
+  donePartsSelection = {};
+  (prefillUsedParts || []).forEach(up => { donePartsSelection[up.partId] = up.qty; });
+
+  const listEl = document.getElementById("donePartsList");
+  listEl.innerHTML = "";
+
+  if (parts.length === 0) {
+    listEl.innerHTML = `<div class="empty-hint" style="padding:14px;">ยังไม่มีอะไหล่ในสต๊อก ไปที่แท็บ "สต๊อกอะไหล่" เพื่อเพิ่มอะไหล่ก่อน (ปิดงานได้โดยไม่ใช้อะไหล่)</div>`;
+    updateDonePartsTotal();
+    return;
+  }
+
+  [...parts].sort((a,b) => a.name.localeCompare(b.name, 'th')).forEach(p => {
+    const row = document.createElement("div");
+    row.className = "part-row";
+    const currentQty = donePartsSelection[p.id] || 0;
+    row.innerHTML = `
+      <div>
+        <div class="p-name">${escapeHtml(p.name)}</div>
+        <div class="p-meta">ต้นทุน ฿${p.costPrice.toLocaleString()} • ขาย ฿${p.salePrice.toLocaleString()} • คงเหลือ ${p.stockQty}</div>
+      </div>
+      <div class="qty-stepper">
+        <button type="button" class="qty-btn" data-part="${p.id}" data-delta="-1">−</button>
+        <span class="qty-value" id="qty-${p.id}">${currentQty}</span>
+        <button type="button" class="qty-btn" data-part="${p.id}" data-delta="1" ${currentQty >= p.stockQty ? "disabled" : ""}>+</button>
+      </div>
+    `;
+    listEl.appendChild(row);
+  });
+
+  listEl.querySelectorAll(".qty-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const partId = btn.dataset.part;
+      const delta = parseInt(btn.dataset.delta, 10);
+      const part = parts.find(p => p.id === partId);
+      if (!part) return;
+      let qty = (donePartsSelection[partId] || 0) + delta;
+      if (qty < 0) qty = 0;
+      if (qty > part.stockQty) qty = part.stockQty;
+      donePartsSelection[partId] = qty;
+      document.getElementById("qty-" + partId).textContent = qty;
+      const minusBtn = listEl.querySelector(`.qty-btn[data-part="${partId}"][data-delta="-1"]`);
+      const plusBtn = listEl.querySelector(`.qty-btn[data-part="${partId}"][data-delta="1"]`);
+      if (minusBtn) minusBtn.disabled = qty <= 0;
+      if (plusBtn) plusBtn.disabled = qty >= part.stockQty;
+      updateDonePartsTotal();
+    });
+  });
+
+  updateDonePartsTotal();
+}
+
+function updateDonePartsTotal(){
+  let total = 0;
+  Object.entries(donePartsSelection).forEach(([partId, qty]) => {
+    const part = parts.find(p => p.id === partId);
+    if (part && qty > 0) total += part.costPrice * qty;
+  });
+  document.getElementById("donePartsTotal").textContent = "รวมต้นทุนอะไหล่: ฿" + total.toLocaleString(undefined,{maximumFractionDigits:2});
+  return total;
+}
+
+/* ---------- Status transitions ---------- */
+async function updateStatus(id, status){
+  const t = tickets.find(x => x.id === id);
+  if (!t) return;
+  if (status === "done") {
+    pendingDoneTicketId = id;
+    document.getElementById("dPrice").value = t.repairPrice || "";
+    buildDonePartsList(t.usedParts);
+    doneOverlay.classList.add("open");
+    return;
+  }
+  t.status = status;
+  await saveTicket(t);
+  render();
+}
+
+document.getElementById("btnDoneCancel").addEventListener("click", () => {
+  doneOverlay.classList.remove("open");
+  pendingDoneTicketId = null;
+});
+
+document.getElementById("btnDoneConfirm").addEventListener("click", async () => {
+  const price = parseFloat(document.getElementById("dPrice").value);
+  if (isNaN(price) || price < 0) {
+    await showAlert("กรุณากรอกราคาที่เรียกเก็บให้ถูกต้อง");
+    return;
+  }
+  const t = tickets.find(x => x.id === pendingDoneTicketId);
+  if (!t) return;
+
+  const usedParts = [];
+  let partsCost = 0;
+  Object.entries(donePartsSelection).forEach(([partId, qty]) => {
+    if (qty > 0) {
+      const part = parts.find(p => p.id === partId);
+      if (part) {
+        usedParts.push({ partId: part.id, name: part.name, qty, costPrice: part.costPrice, salePrice: part.salePrice });
+        partsCost += part.costPrice * qty;
+      }
+    }
+  });
+
+  t.status = "done";
+  t.repairPrice = price;
+  t.partsCost = partsCost;
+  t.usedParts = usedParts;
+  t.doneAt = Date.now();
+  await saveTicket(t);
+
+  for (const up of usedParts) {
+    const part = parts.find(p => p.id === up.partId);
+    if (!part) continue;
+    part.stockQty = Math.max(0, part.stockQty - up.qty);
+    try { await storageSet("part:" + part.id, JSON.stringify(part)); } catch (e) { console.error(e); }
+
+    const move = {
+      id: "m" + Date.now() + "_" + up.partId,
+      partId: part.id,
+      partName: part.name,
+      type: "out",
+      qty: up.qty,
+      costPriceAtTime: up.costPrice,
+      ticketRef: `${t.customerName} • ${t.brand} ${t.model || ""}`,
+      note: "ใช้ในงานซ่อม",
+      createdAt: Date.now(),
+    };
+    try {
+      await storageSet("stockmove:" + move.id, JSON.stringify(move));
+      stockMoves.push(move);
+    } catch (e) { console.error(e); }
+  }
+
+  doneOverlay.classList.remove("open");
+  pendingDoneTicketId = null;
+  render();
+});
+
+/* customer picked up device -> archive to finance, remove from board */
+async function customerPickedUp(id){
+  const t = tickets.find(x => x.id === id);
+  if (!t) return;
+  const confirmed = await showConfirm(
+    "รายการนี้จะย้ายไปหน้าฝ่ายการเงิน และจะหายไปจากบอร์ดงานซ่อม",
+    "ยืนยันว่าลูกค้ามารับเครื่องแล้ว?"
+  );
+  if (!confirmed) return;
+
+  const price = t.repairPrice || 0;
+  const parts_ = t.partsCost || 0;
+  const netRevenue = price / (1 + VAT_RATE);
+  const vatAmount = price - netRevenue;
+  const profit = netRevenue - parts_;
+
+  const record = {
+    id: "f" + Date.now(),
+    customerName: t.customerName,
+    phoneNumber: t.phoneNumber,
+    brand: t.brand,
+    model: t.model,
+    repairPrice: price,
+    vatAmount: vatAmount,
+    partsCost: parts_,
+    usedParts: t.usedParts || [],
+    profit: profit,
+    pickedUpAt: Date.now(),
+  };
+
+  try {
+    await storageSet("finance:" + record.id, JSON.stringify(record));
+    await storageDelete("ticket:" + t.id);
+    financeRecords.push(record);
+    tickets = tickets.filter(x => x.id !== t.id);
+    render();
+    renderFinance();
+  } catch (err) {
+    console.error("ย้ายไปฝ่ายการเงินไม่สำเร็จ", err);
+    await showAlert("เกิดข้อผิดพลาด กรุณาลองใหม่");
+  }
+}
+
+/* ---------- Rendering: board ---------- */
+function symptomLabels(ticket){
+  const labels = ticket.symptoms.map(key => {
+    const s = SYMPTOMS.find(x => x.key === key);
+    return s ? s.label : key;
+  });
+  if (ticket.customSymptom) labels.push(ticket.customSymptom);
+  return labels;
+}
+
+function matchesSearch(t){
+  if (!searchTerm) return true;
+  const hay = [t.customerName, t.phoneNumber, t.brand, t.model].join(" ").toLowerCase();
+  return hay.includes(searchTerm.toLowerCase());
+}
+
+function render(){
+  boardWrap.innerHTML = "";
+  const board = document.createElement("div");
+  board.className = "board";
+
+  STATUS_COLUMNS.forEach(col => {
+    const colTickets = tickets.filter(t => t.status === col.key && matchesSearch(t))
+                               .sort((a,b) => b.createdAt - a.createdAt);
+    const colEl = document.createElement("div");
+    colEl.className = "col";
+    colEl.innerHTML = `
+      <div class="col-head">
+        <h2>${col.label}</h2>
+        <span class="col-count">${colTickets.length}</span>
+      </div>
+    `;
+
+    if (colTickets.length === 0) {
+      const hint = document.createElement("div");
+      hint.className = "empty-hint";
+      hint.textContent = "ยังไม่มีรายการในสถานะนี้";
+      colEl.appendChild(hint);
+    }
+
+    colTickets.forEach(t => {
+      const card = document.createElement("div");
+      card.className = "card";
+      const badgeClass = t.severity === "severe" ? "badge-severe" : t.severity === "medium" ? "badge-medium" : "badge-light";
+      const tagsHtml = symptomLabels(t).slice(0,3).map(l => `<span class="tag">${escapeHtml(l)}</span>`).join("");
+
+      let actionsHtml = "";
+      if (col.key === "pending") {
+        actionsHtml += `<button class="btn btn-ghost btn-sm" data-act="repairing">เริ่มซ่อม</button>`;
+      }
+      if (col.key === "repairing") {
+        actionsHtml += `<button class="btn btn-success btn-sm" data-act="done">ซ่อมเสร็จ</button>`;
+      }
+      if ((col.key === "pending" || col.key === "repairing") && t.severity === "severe") {
+        actionsHtml += `<button class="btn btn-accent btn-sm" data-act="sent_center">ส่งซ่อมศูนย์</button>`;
+      }
+      if (col.key === "sent_center") {
+        actionsHtml += `<button class="btn btn-success btn-sm" data-act="done">รับกลับจากศูนย์ / เสร็จ</button>`;
+      }
+      if (col.key === "done") {
+        actionsHtml += `<button class="btn btn-accent btn-sm" data-act="picked_up">ลูกค้ามารับแล้ว</button>`;
+      }
+      actionsHtml += `<button class="btn btn-ghost btn-sm" data-act="edit">แก้ไข</button>`;
+      actionsHtml += `<button class="btn btn-ghost btn-sm" data-act="delete">ลบ</button>`;
+
+      card.innerHTML = `
+        <div class="card-top">
+          <div>
+            <div class="card-device">${escapeHtml(t.brand)} ${escapeHtml(t.model || "")}</div>
+            <div class="card-customer">${escapeHtml(t.customerName)}${t.phoneNumber ? " · " + escapeHtml(t.phoneNumber) : ""}</div>
+          </div>
+          <span class="badge ${badgeClass}">${SEV_LABEL[t.severity]}</span>
+        </div>
+        <div class="tags">${tagsHtml}</div>
+        <div class="card-actions"></div>
+      `;
+      const actionsWrap = card.querySelector(".card-actions");
+      actionsWrap.innerHTML = actionsHtml;
+
+      actionsWrap.querySelectorAll("button").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const act = btn.dataset.act;
+          if (act === "edit") { openModalForEdit(t); return; }
+          if (act === "delete") { deleteTicket(t.id); return; }
+          if (act === "picked_up") { customerPickedUp(t.id); return; }
+          updateStatus(t.id, act);
+        });
+      });
+
+      colEl.appendChild(card);
+    });
+
+    board.appendChild(colEl);
+  });
+
+  boardWrap.appendChild(board);
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+}
+
+document.getElementById("searchInput").addEventListener("input", (e) => {
+  searchTerm = e.target.value;
+  render();
+});
+
+/* ================= PARTS / STOCK ================= */
+
+function openAddPart(){
+  editingPartId = null;
+  document.getElementById("partModalTitle").textContent = "เพิ่มอะไหล่ใหม่";
+  document.getElementById("pName").value = "";
+  document.getElementById("pCost").value = "";
+  document.getElementById("pSale").value = "";
+  document.getElementById("pQty").value = "";
+  document.getElementById("pQtyField").classList.remove("hidden");
+  partOverlay.classList.add("open");
+}
+
+function openEditPart(part){
+  editingPartId = part.id;
+  document.getElementById("partModalTitle").textContent = "แก้ไขอะไหล่";
+  document.getElementById("pName").value = part.name;
+  document.getElementById("pCost").value = part.costPrice;
+  document.getElementById("pSale").value = part.salePrice;
+  document.getElementById("pQtyField").classList.add("hidden");
+  partOverlay.classList.add("open");
+}
+
+document.getElementById("btnAddPart").addEventListener("click", openAddPart);
+document.getElementById("btnPartCancel").addEventListener("click", () => partOverlay.classList.remove("open"));
+partOverlay.addEventListener("click", (e) => { if (e.target === partOverlay) partOverlay.classList.remove("open"); });
+
+document.getElementById("btnPartSave").addEventListener("click", async () => {
+  const name = document.getElementById("pName").value.trim();
+  const cost = parseFloat(document.getElementById("pCost").value);
+  const sale = parseFloat(document.getElementById("pSale").value);
+  if (!name || isNaN(cost) || cost < 0 || isNaN(sale) || sale < 0) {
+    await showAlert("กรุณากรอกชื่ออะไหล่ ต้นทุน และราคาขายให้ถูกต้อง");
+    return;
+  }
+
+  if (editingPartId) {
+    const part = parts.find(p => p.id === editingPartId);
+    if (!part) return;
+    part.name = name; part.costPrice = cost; part.salePrice = sale;
+    try {
+      await storageSet("part:" + part.id, JSON.stringify(part));
+    } catch (e) { console.error(e); await showAlert("บันทึกไม่สำเร็จ"); return; }
+  } else {
+    const qty = parseFloat(document.getElementById("pQty").value) || 0;
+    const part = { id: "p" + Date.now(), name, costPrice: cost, salePrice: sale, stockQty: qty, createdAt: Date.now() };
+    try {
+      await storageSet("part:" + part.id, JSON.stringify(part));
+      parts.push(part);
+      if (qty > 0) {
+        const move = { id: "m" + Date.now() + "_init", partId: part.id, partName: part.name, type: "in", qty, note: "เพิ่มอะไหล่ใหม่เข้าสต๊อกครั้งแรก", createdAt: Date.now() };
+        await storageSet("stockmove:" + move.id, JSON.stringify(move));
+        stockMoves.push(move);
+      }
+    } catch (e) { console.error(e); await showAlert("บันทึกไม่สำเร็จ"); return; }
+  }
+
+  partOverlay.classList.remove("open");
+  renderStock();
+});
+
+async function deletePart(id){
+  const part = parts.find(p => p.id === id);
+  if (!part) return;
+  const ok = await showConfirm(
+    `อะไหล่: ${part.name}\nคงเหลือ: ${part.stockQty}\n\nประวัติการรับเข้า/ใช้อะไหล่นี้จะยังอยู่ แต่จะไม่สามารถเลือกอะไหล่นี้ได้อีก`,
+    "ยืนยันลบอะไหล่นี้ออกจากสต๊อกหรือไม่?"
+  );
+  if (!ok) return;
+  try {
+    await storageDelete("part:" + id);
+    parts = parts.filter(p => p.id !== id);
+    renderStock();
+  } catch (e) {
+    console.error(e);
+    await showAlert("ลบไม่สำเร็จ กรุณาลองใหม่");
+  }
+}
+
+function openStockIn(){
+  const sel = document.getElementById("siPartSelect");
+  sel.innerHTML = "";
+  if (parts.length === 0) {
+    const opt = document.createElement("option");
+    opt.value = ""; opt.textContent = "ยังไม่มีอะไหล่ - เพิ่มอะไหล่ใหม่ก่อน";
+    sel.appendChild(opt);
+  } else {
+    [...parts].sort((a,b) => a.name.localeCompare(b.name,'th')).forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.id; opt.textContent = `${p.name} (คงเหลือ ${p.stockQty})`;
+      sel.appendChild(opt);
+    });
+  }
+  document.getElementById("siQty").value = "";
+  document.getElementById("siNote").value = "";
+  stockInOverlay.classList.add("open");
+}
+document.getElementById("btnStockIn").addEventListener("click", openStockIn);
+document.getElementById("btnStockInCancel").addEventListener("click", () => stockInOverlay.classList.remove("open"));
+stockInOverlay.addEventListener("click", (e) => { if (e.target === stockInOverlay) stockInOverlay.classList.remove("open"); });
+
+document.getElementById("btnStockInSave").addEventListener("click", async () => {
+  const partId = document.getElementById("siPartSelect").value;
+  const qty = parseFloat(document.getElementById("siQty").value);
+  const note = document.getElementById("siNote").value.trim();
+  const part = parts.find(p => p.id === partId);
+  if (!part) { await showAlert("กรุณาเลือกอะไหล่ หรือเพิ่มอะไหล่ใหม่ก่อน"); return; }
+  if (isNaN(qty) || qty <= 0) { await showAlert("กรุณากรอกจำนวนที่รับเข้าให้ถูกต้อง"); return; }
+
+  part.stockQty += qty;
+  try {
+    await storageSet("part:" + part.id, JSON.stringify(part));
+    const move = { id: "m" + Date.now(), partId: part.id, partName: part.name, type: "in", qty, note: note || "-", createdAt: Date.now() };
+    await storageSet("stockmove:" + move.id, JSON.stringify(move));
+    stockMoves.push(move);
+  } catch (e) { console.error(e); await showAlert("บันทึกไม่สำเร็จ"); return; }
+
+  stockInOverlay.classList.remove("open");
+  renderStock();
+});
+
+const SAMPLE_PARTS = [
+  { name: "จอ iPhone 13 (จอ+ทัช)", costPrice: 1200, salePrice: 1800, stockQty: 5 },
+  { name: "จอ Samsung Galaxy A54", costPrice: 1000, salePrice: 1500, stockQty: 5 },
+  { name: "แบตเตอรี่ iPhone 12", costPrice: 350, salePrice: 600, stockQty: 10 },
+  { name: "แบตเตอรี่ Samsung Galaxy A34", costPrice: 300, salePrice: 550, stockQty: 10 },
+  { name: "สายชาร์จ Type-C", costPrice: 50, salePrice: 120, stockQty: 30 },
+  { name: "สายชาร์จ Lightning", costPrice: 60, salePrice: 150, stockQty: 30 },
+  { name: "หัวชาร์จ 20W", costPrice: 100, salePrice: 220, stockQty: 20 },
+  { name: "ลำโพงโทรศัพท์ (Speaker)", costPrice: 80, salePrice: 200, stockQty: 15 },
+  { name: "แพรก้นชาร์จ (Charging Port Flex)", costPrice: 150, salePrice: 350, stockQty: 12 },
+  { name: "กล้องหลังโทรศัพท์ (Rear Camera)", costPrice: 400, salePrice: 750, stockQty: 8 },
+];
+
+async function seedSampleParts(){
+  if (parts.length > 0) {
+    const ok = await showConfirm(
+      "ในสต๊อกมีอะไหล่อยู่แล้ว การเพิ่มข้อมูลตัวอย่างจะเพิ่มอะไหล่ 10 รายการนี้ต่อท้ายรายการเดิม (ไม่ลบของเดิม)",
+      "เพิ่มข้อมูลตัวอย่าง 10 รายการหรือไม่?"
+    );
+    if (!ok) return;
+  }
+  let successCount = 0;
+  let failCount = 0;
+  for (let i = 0; i < SAMPLE_PARTS.length; i++) {
+    const sp = SAMPLE_PARTS[i];
+    const part = { id: "p" + Date.now() + "_" + i, name: sp.name, costPrice: sp.costPrice, salePrice: sp.salePrice, stockQty: sp.stockQty, createdAt: Date.now() };
+    try {
+      await storageSet("part:" + part.id, JSON.stringify(part));
+      parts.push(part);
+      const move = { id: "m" + Date.now() + "_seed_" + i, partId: part.id, partName: part.name, type: "in", qty: sp.stockQty, note: "ข้อมูลตัวอย่าง", createdAt: Date.now() };
+      await storageSet("stockmove:" + move.id, JSON.stringify(move));
+      stockMoves.push(move);
+      successCount++;
+    } catch (e) {
+      console.error("seed part failed:", sp.name, e);
+      failCount++;
+    }
+    await wait(150); // small gap between writes so the backend isn't hit with a burst
+  }
+  renderStock();
+  if (failCount > 0) {
+    await showAlert(`เพิ่มสำเร็จ ${successCount} รายการ, ไม่สำเร็จ ${failCount} รายการ เนื่องจากเครือข่าย/เซิร์ฟเวอร์ขัดข้องชั่วคราว กรุณาลองกดปุ่มนี้อีกครั้ง (ตรวจสอบในตารางก่อน เพื่อไม่ให้เพิ่มรายการที่สำเร็จแล้วซ้ำ)`, "เพิ่มข้อมูลตัวอย่างเสร็จบางส่วน");
+  }
+}
+document.getElementById("btnSeedParts").addEventListener("click", seedSampleParts);
+
+function renderStock(){
+  const wrap = document.getElementById("stockWrap");
+  const totalTypes = parts.length;
+  const totalQty = parts.reduce((s,p) => s + p.stockQty, 0);
+  const totalValue = parts.reduce((s,p) => s + p.stockQty * p.costPrice, 0);
+
+  let html = `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="label">จำนวนชนิดอะไหล่</div><div class="value">${totalTypes}</div></div>
+      <div class="stat-card"><div class="label">จำนวนคงเหลือรวม (ชิ้น)</div><div class="value">${totalQty}</div></div>
+      <div class="stat-card"><div class="label">มูลค่าต้นทุนคงเหลือ</div><div class="value">฿${totalValue.toLocaleString(undefined,{maximumFractionDigits:2})}</div></div>
+    </div>
+
+    <div class="section-title">รายการอะไหล่คงคลัง</div>
+  `;
+
+  if (parts.length === 0) {
+    html += `<div class="empty-hint">ยังไม่มีอะไหล่ในสต๊อก กด "+ เพิ่มอะไหล่ใหม่" เพื่อเริ่มต้น</div>`;
+  } else {
+    const rows = [...parts].sort((a,b) => a.name.localeCompare(b.name,'th')).map(p => `
+      <tr>
+        <td>${escapeHtml(p.name)}</td>
+        <td class="num">${p.stockQty}</td>
+        <td class="num">฿${p.costPrice.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
+        <td class="num">฿${p.salePrice.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
+        <td class="num">
+          <button class="btn btn-ghost btn-sm" data-edit-part="${p.id}">แก้ไข</button>
+          <button class="btn btn-ghost btn-sm" data-del-part="${p.id}">ลบ</button>
+        </td>
+      </tr>
+    `).join("");
+    html += `
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>ชื่ออะไหล่</th><th style="text-align:right;">คงเหลือ</th><th style="text-align:right;">ต้นทุน/ชิ้น</th><th style="text-align:right;">ราคาขาย/ชิ้น</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  html += `<div class="section-title">ประวัติอะไหล่เข้าร้าน</div>`;
+  const inMoves = stockMoves.filter(m => m.type === "in").sort((a,b) => b.createdAt - a.createdAt);
+  if (inMoves.length === 0) {
+    html += `<div class="empty-hint">ยังไม่มีประวัติการรับอะไหล่เข้า</div>`;
+  } else {
+    const rows = inMoves.map(m => `
+      <tr>
+        <td>${new Date(m.createdAt).toLocaleDateString('th-TH')}</td>
+        <td>${escapeHtml(m.partName)}</td>
+        <td class="num">+${m.qty}</td>
+        <td>${escapeHtml(m.note || "-")}</td>
+      </tr>
+    `).join("");
+    html += `
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>วันที่</th><th>อะไหล่</th><th style="text-align:right;">จำนวน</th><th>หมายเหตุ</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  html += `<div class="section-title">อะไหล่ที่ถูกใช้ (ส่งไปฝ่ายการเงินจัดการ)</div>`;
+  html += buildUsedPartsTableHtml();
+
+  wrap.innerHTML = html;
+
+  wrap.querySelectorAll("[data-edit-part]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const p = parts.find(x => x.id === btn.dataset.editPart);
+      if (p) openEditPart(p);
+    });
+  });
+  wrap.querySelectorAll("[data-del-part]").forEach(btn => {
+    btn.addEventListener("click", () => deletePart(btn.dataset.delPart));
+  });
+}
+
+function buildUsedPartsTableHtml(){
+  const outMoves = stockMoves.filter(m => m.type === "out").sort((a,b) => b.createdAt - a.createdAt);
+  if (outMoves.length === 0) {
+    return `<div class="empty-hint">ยังไม่มีอะไหล่ที่ถูกใช้ในงานซ่อม</div>`;
+  }
+  const rows = outMoves.map(m => `
+    <tr>
+      <td>${new Date(m.createdAt).toLocaleDateString('th-TH')}</td>
+      <td>${escapeHtml(m.partName)}</td>
+      <td class="num">${m.qty}</td>
+      <td class="num">฿${(m.qty * m.costPriceAtTime).toLocaleString(undefined,{maximumFractionDigits:2})}</td>
+      <td>${escapeHtml(m.ticketRef || "-")}</td>
+    </tr>
+  `).join("");
+  return `
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>วันที่</th><th>อะไหล่</th><th style="text-align:right;">จำนวน</th><th style="text-align:right;">ต้นทุนรวม</th><th>งานซ่อม / ลูกค้า</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+/* ---------- Rendering: finance ---------- */
+function renderFinance(){
+  const wrap = document.getElementById("financeWrap");
+
+  const totalRevenue = financeRecords.reduce((s,r) => s + r.repairPrice, 0);
+  const totalVat = financeRecords.reduce((s,r) => s + r.vatAmount, 0);
+  const totalParts = financeRecords.reduce((s,r) => s + r.partsCost, 0);
+  const totalProfit = financeRecords.reduce((s,r) => s + r.profit, 0);
+
+  let html = `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="label">รายรับรวม (รวม VAT)</div><div class="value">฿${totalRevenue.toLocaleString(undefined,{maximumFractionDigits:2})}</div></div>
+      <div class="stat-card"><div class="label">VAT 7% + ต้นทุนอะไหล่รวม</div><div class="value">฿${(totalVat+totalParts).toLocaleString(undefined,{maximumFractionDigits:2})}</div></div>
+      <div class="stat-card profit"><div class="label">กำไรสุทธิรวม</div><div class="value">฿${totalProfit.toLocaleString(undefined,{maximumFractionDigits:2})}</div></div>
+    </div>
+  `;
+
+  html += `<div class="section-title">งานซ่อมที่ลูกค้ารับเครื่องแล้ว</div>`;
+  if (financeRecords.length === 0) {
+    html += `<div class="empty-hint">ยังไม่มีรายการที่ลูกค้ามารับเครื่อง</div>`;
+  } else {
+    const sorted = [...financeRecords].sort((a,b) => b.pickedUpAt - a.pickedUpAt);
+    const rows = sorted.map(r => `
+      <tr>
+        <td>${new Date(r.pickedUpAt).toLocaleDateString('th-TH')}</td>
+        <td>${escapeHtml(r.customerName)}</td>
+        <td>${escapeHtml(r.brand)} ${escapeHtml(r.model || "")}</td>
+        <td class="num">฿${r.repairPrice.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
+        <td class="num">฿${r.vatAmount.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
+        <td class="num">฿${r.partsCost.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
+        <td class="num profit-cell">฿${r.profit.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
+        <td class="num"><button class="btn btn-ghost btn-sm" data-fin-del="${r.id}">ลบ</button></td>
+      </tr>
+    `).join("");
+    html += `
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>วันที่รับเครื่อง</th><th>ลูกค้า</th><th>เครื่อง</th>
+              <th style="text-align:right;">ราคาที่เก็บ</th><th style="text-align:right;">VAT 7%</th>
+              <th style="text-align:right;">ต้นทุนอะไหล่</th><th style="text-align:right;">กำไรสุทธิ</th><th></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  html += `<div class="section-title">อะไหล่ที่ถูกใช้ (สรุปให้ฝ่ายการเงินตรวจสอบของหาย)</div>`;
+  html += buildUsedPartsTableHtml();
+
+  wrap.innerHTML = html;
+
+  wrap.querySelectorAll("[data-fin-del]").forEach(btn => {
+    btn.addEventListener("click", () => deleteFinanceRecord(btn.dataset.finDel));
+  });
+}
+
+async function deleteFinanceRecord(id){
+  const rec = financeRecords.find(r => r.id === id);
+  if (!rec) return;
+  const ok = await showConfirm(
+    `ลูกค้า: ${rec.customerName}\nเครื่อง: ${rec.brand} ${rec.model || ""}\nกำไรที่จะหายไป: ฿${rec.profit.toLocaleString(undefined,{maximumFractionDigits:2})}\n\nการลบนี้ไม่สามารถกู้คืนได้`,
+    "ยืนยันลบรายการนี้ออกจากบัญชีหรือไม่?"
+  );
+  if (!ok) return;
+  try {
+    await storageDelete("finance:" + id);
+    financeRecords = financeRecords.filter(r => r.id !== id);
+    renderFinance();
+  } catch (err) {
+    console.error("ลบรายการการเงินไม่สำเร็จ", err);
+    await showAlert("ลบไม่สำเร็จ กรุณาลองใหม่");
+  }
+}
+
+/* ---------- Load ---------- */
+async function loadKeyed(prefix){
+  const list = await storageList(prefix);
+  const keys = (list && list.keys) || [];
+  const out = [];
+  for (const key of keys) {
+    try {
+      const res = await storageGet(key);
+      if (res && res.value) out.push(JSON.parse(res.value));
+    } catch (e) {}
+  }
+  return out;
+}
+
+async function loadAll(){
+  try {
+    tickets = await loadKeyed("ticket:");
+    financeRecords = await loadKeyed("finance:");
+    parts = await loadKeyed("part:");
+    stockMoves = await loadKeyed("stockmove:");
+  } catch (err) {
+    console.error("โหลดข้อมูลไม่สำเร็จ", err);
+    tickets = []; financeRecords = []; parts = []; stockMoves = [];
+  }
+  render();
+}
+
+loadAll();
+</script>
+
+</body>
+</html>
